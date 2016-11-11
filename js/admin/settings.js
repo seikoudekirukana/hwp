@@ -2,7 +2,6 @@
  * Created by nguyenvanlam on 11/5/16.
  */
 jQuery(document).ready(function($){
-    var frame = null;
 
     function open_media_uploader_multiple_images(){
         // Uploading files
@@ -66,7 +65,7 @@ jQuery(document).ready(function($){
         /* End Get id menu item */
 
         var data = {
-            'action'    :'hwp_ajax',
+            'action'    :'hwp_ajax_create_popup',
             'menu_id' : menuCurrentID
         };
 
@@ -86,13 +85,14 @@ jQuery(document).ready(function($){
             $('#hwp-save-mega-menu').click(function(e){
                 e.preventDefault();
                 var hwpArr = '';
-                var colNumber = 3;
+                var colNumber = 3; var d = 0;
                 $( '.hwpWidget-className' ).each(function () {
                     if( $(this).is(':checked') ){
-                        hwpArr += $(this).val();
+                        hwpArr += $(this).val()+',';
                     }
                 });
                 $( '.hwpMega-colNumber' ).each(function () {
+
                     if( $(this).is(':checked') ){
                         colNumber = $(this).val();
                     }
@@ -101,8 +101,8 @@ jQuery(document).ready(function($){
                 $.post( ajaxurl,{
                     'action'              : 'hwp_ajax_add_mega_menu',
                     'menu_id'             : menuCurrentID,
-                    'listWidgetClassName' : hwpArr ,
-                    'megaColumn'          : colNumber
+                    'list_widgets_class_name' : hwpArr.substr( 0, hwpArr.length -1 ) ,
+                    'mega_column'          : colNumber
                 }, function (data) {
                     if( data === '0' ){
                         $( '#hwp_notices' ).html( warning_status );
@@ -115,36 +115,18 @@ jQuery(document).ready(function($){
 
                 });
                 /* End post ajax to save mega for menu item */
-                
+
                 return false;
             });/* End button Save mega menu */
 
-            /* Start Delete Mega Menu for item with ID */
-            $( '#hwp-delete-mega-menu' ).click( function (e) {
-                $(this).text( hwp.deleting_txt );
-                e.preventDefault();
-                var menuID = $( this ).attr( 'data-menu-id' );
-
-                $.post( ajaxurl,{
-                    'action' : 'hwp_delete_mega_menu_by_item_id',
-                    'menu_id': menuID
-                },function (data) {
-                    if( data === '0' ){
-                        $( '#hwp_notices' ).html( warning_status );
-                    }else{
-                        $( '#hwp_notices' ).html( success_status );
-                    }
-                    setInterval( function () {
-                        $( '#hwp_notices' ).html('');
-                        $('#cboxClose').trigger( 'click' );
-                    } ,3000);
-
-                } );
-
-            } );
-            /* End Delete Mega Menu for item with ID */
+            $('#hwp_reset').click(function () {
+                $('form#hwp-mega-menu-config-form input').each(function () {
+                    $(this).removeAttr( 'checked' );
+                });
+            });
 
         } );/*End post Ajax */
+
     });
     /* End even mega-menu button click */
 

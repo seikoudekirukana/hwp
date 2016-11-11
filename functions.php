@@ -428,11 +428,11 @@ function hwp_get_sidebar( $sidebar_name ){
     <?php
 }
 
-/*
- * Ajax
- * */
-function hwp_ajax_callback(){
-    if( is_user_logged_in() ):
+/**
+ * Ajax create popup mega menu config
+ */
+function hwp_ajax_create_popup_callback(){
+    if( is_admin() ):
     ?>
     <div class="hwp-box-menu-config">
         <div id="hwp_notices"></div>
@@ -451,8 +451,9 @@ function hwp_ajax_callback(){
                     <div class="col-4">
                         <label for="<?php echo $widgetClassName; ?>">
                             <input id="<?php echo $widgetClassName; ?>" type="checkbox"
-                                <?php echo ( in_array( $widgetClassName, $objMega_config->listWidgetClassName ) ) ? 'checked' : ''; ?>
+                                <?php echo ( strpos( $objMega_config->list_widgets_class_name, $widgetClassName ) ) ? 'checked' : ''; ?>
                                    class="checkbox hwpWidget-className"
+                                   name="<?php echo 'CKB_'.$widgetClassName; ?>"
                                    value="<?php echo $widgetClassName; ?>" /> <?php _e( $widget->name,'hwp' ); ?>
                         </label>
                     </div>
@@ -468,7 +469,7 @@ function hwp_ajax_callback(){
                         <label for="<?php echo $i.'column'; ?>">
                             <input id="<?php echo $i.'column'; ?>" type="radio"
                                    name="<?php echo 'radio'; ?>"
-                                   class="checkbox hwpMega-colNumber" <?php echo ( $objMega_config->megaColumn == $i ) ? 'checked': ''; ?>
+                                   class="checkbox hwpMega-colNumber" <?php echo ( $objMega_config->mega_column == $i ) ? 'checked': ''; ?>
                                    value="<?php echo $i; ?>" /> <?php echo $i.'&nbsp;'.__( 'Column','hwp' ); ?>
                         </label>
                     </div>
@@ -479,36 +480,90 @@ function hwp_ajax_callback(){
             <!-- Save button-->
             <div class="row">
                 <button id="hwp-save-mega-menu" type="button" class="button button-primary"><?php _e( 'Save', 'hwp' ); ?></button>
-                <?php if( !is_null($objMega_config->listWidgetClassName) ): ?>
-                <button id="hwp-delete-mega-menu" data-menu-id="<?php echo $menuID; ?>" type="button" class="button"><?php _e( 'Delete', 'hwp' ); ?></button>
-                <?php endif; ?>
+                <input type="button" value="<?php _e( 'Delete', 'hwp' ); ?>" id="hwp_reset" class="btn button" />
             </div>
         </form>
     </div>
 <?php endif; die();
 }
-add_action( 'wp_ajax_hwp_ajax', 'hwp_ajax_callback' );
+add_action( 'wp_ajax_hwp_ajax_create_popup', 'hwp_ajax_create_popup_callback' );
 
+/**
+ * Add mega config to menu item
+ */
 function hwp_ajax_add_mega_menu_callback(){
 
-    $menuID = $_POST['menu_id'];
-    $listWidgetClassName  =  $_POST['listWidgetClassName'];
-    $megaColumn           = $_POST['megaColumn'];
-    
+    $menu_id                    = $_POST['menu_id'];
+    $mega_column                = $_POST['mega_column'];
+    $list_widget_class_name     = $_POST['list_widgets_class_name'];
 
-    /*$meta_value = array( 'listWidgetClassName' => $listWidgetClassName, 'megaColumn' => $megaColumn );
-    $status = update_term_meta( $menuID, 'mega_config', json_encode( $meta_value ) );
-    die($status);*/
+    $mega_config = array(
+        'menu_id'                   => $menu_id,
+        'mega_column'               => $mega_column,
+        'list_widgets_class_name'   => $list_widget_class_name
+    );
+
+    $status = update_term_meta( $menu_id, 'mega_config', json_encode( $mega_config ) );
+    die($status);
 }
 add_action( 'wp_ajax_hwp_ajax_add_mega_menu', 'hwp_ajax_add_mega_menu_callback' );
 
-/*
- * Delete Mega menu by menu-item-id
- * */
+/**
+ *  Delete Mega menu by menu-item-id
+ */
 function hwp_delete_mega_menu_by_item_id_callback(){
     $menu_id = $_POST[ 'menu_id' ];
     $status = update_term_meta($menu_id, 'mega_config');
     die($status);
 }
-
 add_action( 'wp_ajax_hwp_delete_mega_menu_by_item_id', 'hwp_delete_mega_menu_by_item_id_callback' );
+
+/**
+ * Register meta box(es).
+ */
+/**
+ * Instantiates the class
+ */
+add_action( 'admin_init', array( 'call_someClass', 'init' ) );
+
+/**
+ * The Class
+ */
+class call_someClass {
+    const LANG = 'hwp';
+
+    public static function init() {
+        $class = __CLASS__;
+        new $class;
+    }
+
+    public function __construct() {
+        // Abort if not on the nav-menus.php admin UI page - avoid adding elsewhere
+        global $pagenow;
+        if ( 'nav-menus.php' !== $pagenow )
+            return;
+
+        $this->add_some_meta_box();
+    }
+
+    /**
+     * Adds the meta box container
+     */
+    public function add_some_meta_box(){
+        add_meta_box(
+            'info_meta_box_'
+            ,__( 'Example metabox', self::LANG )
+            ,array( $this, 'render_meta_box_content' )
+            ,'nav-menus' // important !!!
+            ,'side' // important, only side seems to work!!!
+            ,'high'
+        );
+    }
+
+    /**
+     * Render Meta Box content
+     */
+    public function render_meta_box_content() {
+        echo '<p>Example text</p>';
+    }
+}

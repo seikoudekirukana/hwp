@@ -47,7 +47,9 @@ class hwp_navbar extends Walker_Nav_Menu{
 
         /* Start get mega config */
         $mega_config = get_term_meta( $item->ID,'mega_config', true );
-        if( strlen( $mega_config ) > 0){
+        $objMega_config = json_decode( $mega_config );
+        $widgets_array = explode( ",",$objMega_config->list_widgets_class_name );
+        if( strlen( $objMega_config->list_widgets_class_name ) > 0){
             $classes[] = "dropdown megamenu-fw";
         }
         if( in_array( "current-menu-item", $item->classes ) ){
@@ -162,27 +164,20 @@ class hwp_navbar extends Walker_Nav_Menu{
         }
         $item_output .= '</a>';
         /* Start mega menu */
-        if(  strlen( $mega_config ) > 0 ){
-            $objMega_config = json_decode( $mega_config );
-            $item_output.='<ul class="dropdown-menu megamenu-content" role="menu">
-                                <li>
-                                    <div class="row" style="overflow-y: auto">';
-                    if( is_array($objMega_config->listWidgetClassName) ):
-                        $hwp_count = 1;
-                        foreach ( $objMega_config->listWidgetClassName as $k => $widgetClassName ):
-                            ob_start(); the_widget( $widgetClassName ); $hwp_widget_html = ob_get_clean();
-                            $item_output.='<div class="col-menu col-md-'.$objMega_config->megaColumn.' ">';
-                            $item_output.= $hwp_widget_html;
-                            $item_output.='</div><!-- end col-'.$objMega_config->megaColumn.' -->';
-                            if( $hwp_count % ( 12/$objMega_config->megaColumn ) == 0 ):
-                                $item_output.='<div class="clearfix"></div>';
-                            endif;
-                            $hwp_count ++;
-                        endforeach;
+        if(  strlen( $objMega_config->list_widgets_class_name ) > 0 ){
+            $item_output.='<ul class="dropdown-menu megamenu-content" role="menu"> <li> <div class="row" style="overflow-y: auto">';
+                $hwp_count = 1;
+                foreach ( $widgets_array as $k => $widgetClassName ):
+                    ob_start(); the_widget( $widgetClassName ); $hwp_widget_html = ob_get_clean();
+                    $item_output.='<div class="col-menu col-md-'.$objMega_config->mega_column.' ">';
+                    $item_output.= $hwp_widget_html;
+                    $item_output.='</div><!-- end col-'.$objMega_config->mega_column.' -->';
+                    if( $hwp_count % ( 12/$objMega_config->mega_column ) == 0 ):
+                        $item_output.='<div class="clearfix"></div>';
                     endif;
-                    $item_output.='</div><!-- end row -->
-                                </li>
-                            </ul>';
+                    $hwp_count ++;
+                endforeach;
+                $item_output.='</div><!-- end row --> </li> </ul>';
         }
         /* End mega menu */
         $item_output .= $args->after;
